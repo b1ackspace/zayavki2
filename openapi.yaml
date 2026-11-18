@@ -1,0 +1,322 @@
+openapi: 3.0.3
+
+info:
+  title: College Bank API
+  description: API платформы обмена навыками студентов «Vzаимопомощь». Управление публикациями (запросами и предложениями помощи).
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8000
+
+paths:
+  /api/offers.php:
+    get:
+      summary: Получение списка публикаций
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Тип публикации
+          schema:
+            type: string
+            enum: [offer, request]
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы (совместно с limit)
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          required: false
+          description: Количество записей на странице (совместно с page)
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Список публикаций успешно получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+        '400':
+          description: Некорректный параметр type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Создание публикации
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferCreate'
+      responses:
+        '201':
+          description: Публикация создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Публикация создана
+                  id:
+                    type: integer
+                    example: 5
+        '400':
+          description: Ошибка валидации или неверный Content-Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/offers.php?id={id}:
+    get:
+      summary: Получение одной публикации
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Публикация найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Публикация не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Обновление публикации
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferUpdate'
+      responses:
+        '200':
+          description: Публикация обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Публикация обновлена
+                  id:
+                    type: integer
+                    example: 5
+        '400':
+          description: Ошибка валидации или неверный Content-Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Публикация не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Удаление публикации
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Публикация удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Публикация удалена
+                  id:
+                    type: integer
+                    example: 5
+        '400':
+          description: Некорректный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Публикация не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: query
+      required: true
+      description: Идентификатор публикации
+      schema:
+        type: integer
+        minimum: 1
+
+  schemas:
+    Offer:
+      type: object
+      required: [id, user_id, title, description, type, status, created_at]
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор публикации
+          example: 5
+        user_id:
+          type: integer
+          description: ID автора публикации
+          example: 2
+        category_id:
+          type: integer
+          description: ID предметной категории
+          example: 1
+        title:
+          type: string
+          maxLength: 200
+          description: Краткая тема публикации
+          example: Помощь с программированием
+        description:
+          type: string
+          maxLength: 5000
+          description: Подробное описание проблемы или предложения
+          example: Помогу разобраться с PHP
+        contact_link:
+          type: string
+          nullable: true
+          description: Ссылка для связи
+          example: ""
+        status:
+          type: string
+          description: Статус публикации
+          example: Активно
+        type:
+          type: string
+          enum: [offer, request]
+          description: Тип публикации
+          example: offer
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания
+          example: "2024-05-15 10:30:00"
+        author_name:
+          type: string
+          nullable: true
+          description: Имя автора (JOIN из users)
+          example: Иван Петров
+        category_name:
+          type: string
+          nullable: true
+          description: Название категории (JOIN из categories)
+          example: Программирование
+
+    OfferCreate:
+      type: object
+      required: [title, description, user_id, type]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          example: Помощь с базами данных
+        description:
+          type: string
+          maxLength: 5000
+          example: Помогу разобраться с SQL
+        user_id:
+          type: integer
+          minimum: 1
+          example: 2
+        type:
+          type: string
+          enum: [offer, request]
+          example: offer
+
+    OfferUpdate:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          example: Помощь с базами данных (обновлено)
+        description:
+          type: string
+          maxLength: 5000
+          example: Помогу разобраться с SQL и NoSQL
+        type:
+          type: string
+          enum: [offer, request]
+          description: Если не указан — остаётся текущее значение
+          example: offer
+        status:
+          type: string
+          description: Если не указан — остаётся текущее значение
+          example: Активно
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Публикация не найдена
